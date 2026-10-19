@@ -29,12 +29,10 @@ public class BrowseItemsFrame extends JFrame {
     private final Color borderPink = new Color(235, 215, 220);
     private final JPanel contentPanel = new JPanel(new BorderLayout());
 
-    // Temporary client-side cart. It will be connected to the server during integration.
     private final Map<String, CartItem> cart = new LinkedHashMap<>();
     private JButton cartButton;
     private JButton headerBackButton;
 
-    // Custom painted rounded button so curved corners work on macOS Swing too.
     private static class RoundedButton extends JButton {
         private final int radius;
         private final Color fillColor;
@@ -81,7 +79,6 @@ public class BrowseItemsFrame extends JFrame {
         }
     }
 
-    // Sample data for browsing; server integration can be added later.
     private final String[] skincareNames = {
         "Facial Cleanser", "Moisturizer", "Face Serum", "Sunscreen"
     };
@@ -121,7 +118,6 @@ public class BrowseItemsFrame extends JFrame {
         header.setBackground(cream);
         header.setBorder(BorderFactory.createEmptyBorder(12, 20, 12, 20));
 
-        // Back arrow on the left, store title centered, cart on the right.
         headerBackButton = new RoundedButton(
                 "\u2190", new Color(255, 225, 232), new Color(145, 75, 96), 22);
         headerBackButton.setFont(new Font("SansSerif", Font.BOLD, 23));
@@ -148,7 +144,6 @@ public class BrowseItemsFrame extends JFrame {
         rightSlot.setOpaque(false);
         rightSlot.add(cartButton);
 
-        // Equal-width header columns keep the store name mathematically centered.
         header.setLayout(new GridLayout(1, 3));
         header.add(leftSlot);
         header.add(title);
@@ -254,7 +249,6 @@ public class BrowseItemsFrame extends JFrame {
         heading.setForeground(pink);
         heading.setBorder(BorderFactory.createEmptyBorder(18, 10, 12, 10));
 
-        // Two columns with compact, consistent product cards.
         JPanel products = new JPanel(new GridLayout(0, 2, 12, 8));
         products.setBackground(cream);
         products.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
@@ -267,7 +261,6 @@ public class BrowseItemsFrame extends JFrame {
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
         scrollPane.getViewport().setBackground(cream);
 
-        // Increase scrolling speed and keep mouse-wheel scrolling enabled.
         scrollPane.getVerticalScrollBar().setUnitIncrement(40);
         scrollPane.getVerticalScrollBar().setBlockIncrement(180);
         scrollPane.getHorizontalScrollBar().setUnitIncrement(30);
@@ -286,7 +279,6 @@ public class BrowseItemsFrame extends JFrame {
                 BorderFactory.createLineBorder(borderPink),
                 BorderFactory.createEmptyBorder(8, 9, 9, 9)));
 
-        // Larger image area, while keeping the image proportions.
         JLabel imageLabel = new JLabel(loadImage(imageFile, 320, 175), SwingConstants.CENTER);
         imageLabel.setOpaque(true);
         imageLabel.setBackground(new Color(255, 248, 245));
@@ -421,7 +413,6 @@ public class BrowseItemsFrame extends JFrame {
             return createPlaceholderIcon(width, height, fileName);
         }
 
-        // Scale proportionally so the image keeps its original shape.
         double scale = Math.min(
                 (double) width / originalWidth,
                 (double) height / originalHeight);
