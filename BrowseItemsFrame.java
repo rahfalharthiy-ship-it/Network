@@ -1,4 +1,5 @@
 
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -384,41 +385,28 @@ public class BrowseItemsFrame extends JFrame {
     }
 
     private void showCart() {
-        if (cart.isEmpty()) {
-            JOptionPane.showMessageDialog(this,
-                    "Your cart is empty for now.\n\nExplore our products and add your favourites!",
-                    "Your Beauty Cart", JOptionPane.INFORMATION_MESSAGE);
-            return;
-        }
-
-        StringBuilder summary = new StringBuilder("<html><body style='width:320px'>");
-        double total = 0.0;
+        java.util.List<ShoppingCartFrame.CartProduct> products =
+                new java.util.ArrayList<>();
 
         for (CartItem item : cart.values()) {
-            double lineTotal = item.price * item.quantity;
-            total += lineTotal;
-            summary.append(item.name)
-                    .append(" — Qty: ").append(item.quantity)
-                    .append(" — SAR ").append(String.format("%.2f", lineTotal))
-                    .append("<br>");
+            products.add(
+                new ShoppingCartFrame.CartProduct(
+                    item.name,
+                    getImageFile(item.name),
+                    item.price,
+                    item.quantity
+                )
+            );
         }
 
-        summary.append("<br><b>Total: SAR ")
-                .append(String.format("%.2f", total))
-                .append("</b></body></html>");
-
-        Object[] options = {"Continue Shopping", "Empty My Cart"};
-        int choice = JOptionPane.showOptionDialog(
-                this, summary.toString(), "Shopping Cart",
-                JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
-                null, options, options[0]);
-
-        if (choice == 1) {
-            cart.clear();
-            updateCartButton();
-        }
+        new ShoppingCartFrame(
+            products,
+            name -> {
+                cart.remove(name);
+                updateCartButton();
+            }
+        ).setVisible(true);
     }
-
     private ImageIcon loadImage(String fileName, int width, int height) {
         URL imageUrl = getClass().getResource("/images/" + fileName);
         if (imageUrl == null) {
@@ -465,5 +453,30 @@ public class BrowseItemsFrame extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> new BrowseItemsFrame().setVisible(true));
+    }
+    
+    private String getImageFile(String name) {
+        String[][] namesAndImages = {
+            {"Facial Cleanser", "Facial_Cleanser.png"},
+            {"Moisturizer", "Moisturizer.png"},
+            {"Face Serum", "Face_Serum.png"},
+            {"Sunscreen", "Sunscreen.png"},
+            {"Shampoo", "Shampoo.png"},
+            {"Conditioner", "Conditioner.png"},
+            {"Hair Mask", "Hair_Mask.png"},
+            {"Hair Oil", "Hair_Oil.png"},
+            {"Body Lotion", "Body_Lotion.png"},
+            {"Body Wash", "Body_Wash.png"},
+            {"Body Scrub", "Body_Scrub.png"},
+            {"Body Cream", "Body_Cream.png"}
+        };
+
+        for (String[] item : namesAndImages) {
+            if (item[0].equals(name)) {
+                return item[1];
+            }
+        }
+
+        return "";
     }
 }
