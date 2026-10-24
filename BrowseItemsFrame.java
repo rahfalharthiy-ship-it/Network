@@ -1,5 +1,4 @@
 
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -128,15 +127,58 @@ public class BrowseItemsFrame extends JFrame {
         header.setBorder(BorderFactory.createEmptyBorder(12, 20, 12, 20));
 
         
-        headerBackButton = new RoundedButton(
-            "back", new Color(255, 225, 232), new Color(145, 75, 96), 22);
-        headerBackButton.setFont(new Font("SansSerif", Font.BOLD, 23));
+        headerBackButton = new RoundedButton("",
+                new Color(255, 225, 232),
+                new Color(93, 70, 125), 22) {
+
+            @Override
+            protected void paintComponent(java.awt.Graphics g) {
+                super.paintComponent(g);
+
+                java.awt.Graphics2D g2 =
+                        (java.awt.Graphics2D) g.create();
+
+                g2.setRenderingHint(
+                        java.awt.RenderingHints.KEY_ANTIALIASING,
+                        java.awt.RenderingHints.VALUE_ANTIALIAS_ON
+                );
+
+                g2.setColor(new Color(93, 70, 125));
+                g2.setStroke(new java.awt.BasicStroke(
+                        2.5f,
+                        java.awt.BasicStroke.CAP_ROUND,
+                        java.awt.BasicStroke.JOIN_ROUND
+                ));
+
+                int centerY = getHeight() / 2;
+                int centerX = getWidth() / 2;
+
+                // جسم السهم
+                g2.drawLine(centerX + 7, centerY,
+                            centerX - 7, centerY);
+
+                // رأس السهم
+                g2.drawLine(centerX - 7, centerY,
+                            centerX, centerY - 7);
+
+                g2.drawLine(centerX - 7, centerY,
+                            centerX, centerY + 7);
+
+                g2.dispose();
+            }
+        };
+
         headerBackButton.setToolTipText("Back to Categories");
         headerBackButton.setPreferredSize(new Dimension(48, 40));
+        headerBackButton.setMinimumSize(new Dimension(48, 40));
+        headerBackButton.setMaximumSize(new Dimension(48, 40));
+
         headerBackButton.addActionListener(e -> showCategories());
         headerBackButton.setVisible(false);
 
-        JPanel leftSlot = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
+        JPanel leftSlot = new JPanel(
+                new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 0, 0)
+        );
         leftSlot.setOpaque(false);
         leftSlot.add(headerBackButton);
 
@@ -145,9 +187,15 @@ public class BrowseItemsFrame extends JFrame {
         title.setForeground(pink);
 
         cartButton = new RoundedButton(
-                "Cart", new Color(255, 225, 232), new Color(145, 75, 96), 18);
-        cartButton.setFont(new Font("SansSerif", Font.BOLD, 14));
-        cartButton.setPreferredSize(new Dimension(112, 40));
+                "🛒",
+                new Color(255, 225, 232),
+                new Color(145, 75, 96),
+                18
+        );
+        cartButton.setFont(new Font("Dialog", Font.BOLD, 16));
+        cartButton.setPreferredSize(new Dimension(125, 46));
+        cartButton.setMinimumSize(new Dimension(125, 46));
+        cartButton.setMaximumSize(new Dimension(125, 46));
         cartButton.addActionListener(e -> showCart());
 
         JPanel rightSlot = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 0, 0));
@@ -376,12 +424,18 @@ public class BrowseItemsFrame extends JFrame {
         return card;
     }
 
-    private void updateCartButton() {   
+    private void updateCartButton() {
         int totalQuantity = 0;
+
         for (CartItem item : cart.values()) {
             totalQuantity += item.quantity;
         }
-        cartButton.setText("Cart (" + totalQuantity + ")");
+
+        if (totalQuantity == 0) {
+            cartButton.setText("🛒");
+        } else {
+            cartButton.setText("🛒 " + totalQuantity);
+        }
     }
 
     private void showCart() {
