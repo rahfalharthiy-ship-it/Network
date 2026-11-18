@@ -438,29 +438,33 @@ public class BrowseItemsFrame extends JFrame {
         }
     }
 
-    private void showCart() {
-        java.util.List<ShoppingCartFrame.CartProduct> products =
-                new java.util.ArrayList<>();
+   private void showCart() {
 
-        for (CartItem item : cart.values()) {
-            products.add(
+    java.util.List<ShoppingCartFrame.CartProduct> products =
+            new java.util.ArrayList<>();
+
+    for (CartItem item : cart.values()) {
+
+        products.add(
                 new ShoppingCartFrame.CartProduct(
-                    item.name,
-                    getImageFile(item.name),
-                    item.price,
-                    item.quantity
+                        item.name,
+                        getImageFile(item.name),
+                        item.price,
+                        item.quantity
                 )
-            );
-        }
+        );
+    }
 
-        new ShoppingCartFrame(
+    new ShoppingCartFrame(
             products,
             name -> {
                 cart.remove(name);
                 updateCartButton();
-            }
-        ).setVisible(true);
-    }
+            },
+            out,
+            username
+    ).setVisible(true);
+}
     private ImageIcon loadImage(String fileName, int width, int height) {
         URL imageUrl = getClass().getResource("/images/" + fileName);
         if (imageUrl == null) {
