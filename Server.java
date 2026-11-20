@@ -1,9 +1,10 @@
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Server {
 private static final int PORT = 5000;
@@ -11,6 +12,10 @@ private static final int MAX_CLIENTS = 4;
 
 private static final List<ClientHandler> clients =
         new ArrayList<>();
+
+// Confirmed orders of each user (key = username)
+private static final Map<String, List<Order>> ordersByUser =
+        new HashMap<>();
 
 public static void main(String[] args) {
 
@@ -79,6 +84,36 @@ public static void removeClient(ClientHandler client) {
     }
 }
 
+public static void saveOrder(Order order) {
+    synchronized (ordersByUser) {
+        ordersByUser
+                .computeIfAbsent(order.getUsername(),
+                        key -> new ArrayList<>())
+                .add(order);
+    }
+}
+
+public static List<Order> getOrdersByUser(String username) {
+    synchronized (ordersByUser) {
+        List<Order> orders = ordersByUser.get(username);
+        if (orders == null) {
+            return new ArrayList<>();
+        }
+        return new ArrayList<>(orders);
+    }
+}
+
+// For the Cancel Order part
+public static Order findOrder(String username, long timestamp) {
+    for (Order order : getOrdersByUser(username)) {
+        if (order.getTimestamp() == timestamp) {
+            return order;
+        }
+    }
+    return null;
+}
+
+
 public static void showConnectedClients() {
 
     synchronized (clients) {
@@ -100,4 +135,3 @@ public static void showConnectedClients() {
     }
 }
 }  
-
