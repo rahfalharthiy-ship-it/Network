@@ -82,7 +82,13 @@ class ServerConnection implements Runnable {
             while (true) {
                 String serverResponse = in.readLine();
                 if (serverResponse == null) break;
-                System.out.println("Server says: " + serverResponse);
+                if (serverResponse.startsWith("ORDER_RESULT|")) {
+    ShoppingCartFrame.showOrderResult(serverResponse);
+} else if (serverResponse.startsWith("MY_ORDERS|")) {
+    MyOrdersFrame.showOrders(serverResponse);
+} else {
+    System.out.println("Server says: " + serverResponse);
+}
             }
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -95,5 +101,4 @@ class ServerConnection implements Runnable {
         }
     }
 }
-
 
