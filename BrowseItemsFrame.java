@@ -1,4 +1,3 @@
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -38,6 +37,7 @@ public class BrowseItemsFrame extends JFrame {
     private final Map<String, CartItem> cart = new LinkedHashMap<>();
     private JButton cartButton;
     private JButton headerBackButton;
+    private JButton myOrdersButton;
 
     // Custom painted rounded button so curved corners work on macOS Swing too.
     private static class RoundedButton extends JButton {
@@ -153,11 +153,9 @@ public class BrowseItemsFrame extends JFrame {
                 int centerY = getHeight() / 2;
                 int centerX = getWidth() / 2;
 
-                // جسم السهم
                 g2.drawLine(centerX + 7, centerY,
                             centerX - 7, centerY);
 
-                // رأس السهم
                 g2.drawLine(centerX - 7, centerY,
                             centerX, centerY - 7);
 
@@ -197,10 +195,20 @@ public class BrowseItemsFrame extends JFrame {
         cartButton.setMinimumSize(new Dimension(125, 46));
         cartButton.setMaximumSize(new Dimension(125, 46));
         cartButton.addActionListener(e -> showCart());
+        
+        
+        myOrdersButton = new RoundedButton("My Orders",
+        new Color(255, 225, 232), new Color(145, 75, 96), 18);
+myOrdersButton.setPreferredSize(new Dimension(125, 46));
+myOrdersButton.setMinimumSize(new Dimension(125, 46));
+myOrdersButton.setMaximumSize(new Dimension(125, 46));
+myOrdersButton.addActionListener(e -> showMyOrders());
 
-        JPanel rightSlot = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 0, 0));
-        rightSlot.setOpaque(false);
-        rightSlot.add(cartButton);
+        
+JPanel rightSlot = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 8, 0));
+rightSlot.setOpaque(false);
+rightSlot.add(myOrdersButton);
+rightSlot.add(cartButton);
 
         // Equal-width header columns keep the store name mathematically centered.
         header.setLayout(new GridLayout(1, 3));
@@ -465,6 +473,17 @@ public class BrowseItemsFrame extends JFrame {
             username
     ).setVisible(true);
 }
+   
+ private void showMyOrders() {
+        if (out == null) {
+            JOptionPane.showMessageDialog(this, "No server connection.",
+                    "Connection Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        MyOrdersFrame.open(username, out);
+    }  
+   
+   
     private ImageIcon loadImage(String fileName, int width, int height) {
         URL imageUrl = getClass().getResource("/images/" + fileName);
         if (imageUrl == null) {
