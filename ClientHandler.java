@@ -1,4 +1,3 @@
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -7,6 +6,7 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.LinkedHashMap;
 
 public class ClientHandler implements Runnable {
 
@@ -84,13 +84,16 @@ public class ClientHandler implements Runnable {
                     continue;
                 }
 
-                // Order request
+               
                 if (message.startsWith("ORDER|")) {
 
                     handleOrder(message);
                 }
 
-                // Other messages
+                else if(message.equals("GET_ORDERS")){
+                    handleGetOrders();
+                }
+               
                 else {
 
                     Server.broadcast(
@@ -148,7 +151,7 @@ public class ClientHandler implements Runnable {
             }
 
             Map<String, Integer> order =
-                    new HashMap<>();
+                    new LinkedHashMap<>();
 
             String[] products = orderData.split(";");
 
@@ -183,6 +186,10 @@ public class ClientHandler implements Runnable {
 
             // Check stock and confirm or cancel order
             String result = processOrder(order);
+            
+            if(result.startsWith("CONFIRMED")){
+                Server.saveOrder(new Order(username, order));
+            }
 
             sendMessage("ORDER_RESULT|" + result);
 
@@ -193,7 +200,19 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    // Check stock and process the order
+ private void handleGetOrders() {
+    List<Order> orders = Server.getOrdersByUser(username);
+    StringBuilder response = new StringBuilder("MY_ORDERS|");
+    for (int i = 0; i < orders.size(); i++) {
+        if (i > 0) {
+            response.append("#");
+        }
+        response.append(orders.get(i).toProtocolString());
+    }
+    sendMessage(response.toString());
+}
+    
+    
     private static synchronized String processOrder(
             Map<String, Integer> order) {
 
@@ -237,4 +256,4 @@ public class ClientHandler implements Runnable {
     public String getUsername() {
         return username;
     }
-}
+} 
