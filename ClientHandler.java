@@ -1,3 +1,4 @@
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -17,26 +18,7 @@ public class ClientHandler implements Runnable {
     private PrintWriter output;
     private String username;
 
-    // Shared stock used to check orders
-    private static final Map<String, Integer> stock =
-            new HashMap<>();
-
-    static {
-        stock.put("Facial Cleanser", 12);
-        stock.put("Moisturizer", 8);
-        stock.put("Face Serum", 10);
-        stock.put("Sunscreen", 15);
-
-        stock.put("Shampoo", 10);
-        stock.put("Conditioner", 9);
-        stock.put("Hair Mask", 6);
-        stock.put("Hair Oil", 11);
-
-        stock.put("Body Lotion", 7);
-        stock.put("Body Wash", 14);
-        stock.put("Body Scrub", 5);
-        stock.put("Body Cream", 8);
-    }
+    
 
     public ClientHandler(
             Socket socket,
@@ -84,14 +66,27 @@ public class ClientHandler implements Runnable {
                     continue;
                 }
 
-               
-                if (message.startsWith("ORDER|")) {
+                if (message.startsWith("STOCK|")) {
 
+                    String productName = message.substring(6).trim();
+
+                    int availableStock = Server.getStock(productName);
+
+                    sendMessage(
+                            "STOCK_RESULT|" + productName + "|" + availableStock);
+
+                    continue;
+                }
+                if (message.startsWith("ORDER|")) {
+                    System.out.println("Received order: " + message);
                     handleOrder(message);
                 }
 
-                else if(message.equals("GET_ORDERS")){
+                else if (message.equals("GET_ORDERS")) {
                     handleGetOrders();
+                }
+                else if (message.startsWith("CANCEL_ORDER|")) {
+                    handleCancelOrder(message);
                 }
                
                 else {
@@ -187,8 +182,12 @@ public class ClientHandler implements Runnable {
             // Check stock and confirm or cancel order
             String result = processOrder(order);
             
-            if(result.startsWith("CONFIRMED")){
+            if (result.startsWith("CONFIRMED")) {
                 Server.saveOrder(new Order(username, order));
+
+                for (String productName : order.keySet()) {
+                    Server.broadcastStockUpdate(productName);
+                }
             }
 
             sendMessage("ORDER_RESULT|" + result);
@@ -200,52 +199,79 @@ public class ClientHandler implements Runnable {
         }
     }
 
- private void handleGetOrders() {
-    List<Order> orders = Server.getOrdersByUser(username);
-    StringBuilder response = new StringBuilder("MY_ORDERS|");
-    for (int i = 0; i < orders.size(); i++) {
-        if (i > 0) {
-            response.append("#");
+    private void handleGetOrders() {
+        List<Order> orders = Server.getOrdersByUser(username);
+        StringBuilder response = new StringBuilder("MY_ORDERS|");
+        for (int i = 0; i < orders.size(); i++) {
+            if (i > 0) {
+                response.append("#");
+            }
+            response.append(orders.get(i).toProtocolString());
         }
-        response.append(orders.get(i).toProtocolString());
+        sendMessage(response.toString());
     }
-    sendMessage(response.toString());
-}
+    
+    private void handleCancelOrder(String message) {
+
+        try {
+            String[] parts = message.split("\\|", 2);
+
+            if (parts.length != 2) {
+                return;
+            }
+
+            long timestamp = Long.parseLong(parts[1]);
+
+            Order order = Server.findOrder(username, timestamp);
+
+            if (order == null || order.isCancelled()) {
+                handleGetOrders();
+                return;
+            }
+
+            synchronized (order) {
+
+                if (order.isCancelled()) {
+                    handleGetOrders();
+                    return;
+                }
+
+                for (Map.Entry<String, Integer> item
+                        : order.getItems().entrySet()) {
+
+                    InventoryManager.restoreStock(
+                            item.getKey(), item.getValue());
+                }
+
+                order.cancel();
+            }
+
+            // Update stock for all connected clients
+            for (String productName : order.getItems().keySet()) {
+                Server.broadcastStockUpdate(productName);
+            }
+
+            // Refresh the orders table
+            handleGetOrders();
+
+        } catch (Exception e) {
+            System.out.println("Error cancelling order: " + e.getMessage());
+        }
+    }
     
     
-    private static synchronized String processOrder(
+    private static String processOrder(
             Map<String, Integer> order) {
 
-        // Check all quantities first
-        for (String product : order.keySet()) {
+        // Deduct all products from the central inventory
+        boolean success = InventoryManager.deductOrder(order);
 
-            int requested = order.get(product);
-
-            int available = stock.getOrDefault(product, 0);
-
-            if (requested > available) {
-
-                return "CANCELLED|Insufficient stock for "
-                        + product
-                        + ". Available quantity: "
-                        + available;
-            }
+        if (success) {
+            return "CONFIRMED|Order placed successfully!";
         }
 
-        // All products are available
-        // Update stock after successful validation
-        for (String product : order.keySet()) {
-
-            int requested = order.get(product);
-
-            int available = stock.get(product);
-
-            stock.put(product, available - requested);
-        }
-
-        return "CONFIRMED|Order placed successfully!";
+        return "CANCELLED|Insufficient stock or invalid product";
     }
-
     public synchronized void sendMessage(String message) {
 
         if (output != null) {
