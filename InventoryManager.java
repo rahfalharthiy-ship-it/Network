@@ -11,7 +11,7 @@ public class InventoryManager {
     
     static {
         stock.put("Facial Cleanser", 20);
-        stock.put("Moisturizer", 88);
+        stock.put("Moisturizer", 30);
         stock.put("Face Serum", 10);
         stock.put("Sunscreen", 15);
 
