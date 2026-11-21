@@ -28,12 +28,12 @@ public class ShoppingCartFrame extends JFrame {
 
     private final List<CartProduct> products;
     private final Consumer<String> onDelete;
-
-    // Connection with the server
+    
     private final PrintWriter out;
 
-    // Username of the connected user
+    
     private final String username;
+    private static ShoppingCartFrame currentInstance;
 
     private static class RoundedButton extends JButton {
 
@@ -111,6 +111,7 @@ public class ShoppingCartFrame extends JFrame {
             Consumer<String> onDelete,
             PrintWriter out,
             String username) {
+        currentInstance = this;
 
         this.products = products;
         this.onDelete = onDelete;
@@ -377,7 +378,7 @@ public class ShoppingCartFrame extends JFrame {
                         Color.WHITE,
                         18);
 
-        // Confirm ordering
+        
         orderButton.addActionListener(e -> {
 
             if (products.isEmpty()) {
@@ -402,14 +403,14 @@ public class ShoppingCartFrame extends JFrame {
                 return;
             }
 
-            // Create the order message
+           
             StringBuilder orderMessage =
                     new StringBuilder("ORDER|");
 
-            // Add username
+           
             orderMessage.append(username).append("|");
 
-            // Add product names and quantities
+          
             for (int i = 0; i < products.size(); i++) {
 
                 CartProduct product = products.get(i);
@@ -424,7 +425,7 @@ public class ShoppingCartFrame extends JFrame {
                 }
             }
 
-            // Send order to server
+            
             out.println(orderMessage.toString());
 
             JOptionPane.showMessageDialog(
@@ -458,7 +459,7 @@ public class ShoppingCartFrame extends JFrame {
         add(mainPanel);
     }
 
-    // Display the server's order response
+    
     public static void showOrderResult(String message) {
 
         SwingUtilities.invokeLater(() -> {
@@ -475,12 +476,28 @@ public class ShoppingCartFrame extends JFrame {
             String result = parts[2];
 
             if (status.equals("CONFIRMED")) {
+                BrowseItemsFrame.refreshCurrentStock();
 
                 JOptionPane.showMessageDialog(
                         null,
                         result,
                         "Order Confirmation",
                         JOptionPane.INFORMATION_MESSAGE);
+
+                if (currentInstance != null) {
+
+                    while (!currentInstance.products.isEmpty()) {
+                        CartProduct product =
+                                currentInstance.products.remove(0);
+
+                        currentInstance.onDelete.accept(product.name);
+                    }
+
+                    currentInstance.getContentPane().removeAll();
+                    currentInstance.createCartGUI();
+                    currentInstance.revalidate();
+                    currentInstance.repaint();
+                }
 
             } else {
 
