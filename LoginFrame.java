@@ -1,3 +1,4 @@
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.BufferedReader;
@@ -5,9 +6,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+
+
 public class LoginFrame extends JFrame {
+    
     private static final String Server_IP = "localhost";
-    private static final int Server_port = 5000;
+    private static final int Server_port = 5001;
     private final JTextField usernameField = new JTextField(15);
     private final JButton connectButton = new JButton("Connect");
     private final JLabel statusLabel = new JLabel(" ", SwingConstants.CENTER);
@@ -83,12 +87,16 @@ class ServerConnection implements Runnable {
                 String serverResponse = in.readLine();
                 if (serverResponse == null) break;
                 if (serverResponse.startsWith("ORDER_RESULT|")) {
-    ShoppingCartFrame.showOrderResult(serverResponse);
-} else if (serverResponse.startsWith("MY_ORDERS|")) {
-    MyOrdersFrame.showOrders(serverResponse);
-} else {
-    System.out.println("Server says: " + serverResponse);
-}
+                ShoppingCartFrame.showOrderResult(serverResponse);
+                } else if (serverResponse.startsWith("MY_ORDERS|")) {
+                    MyOrdersFrame.showOrders(serverResponse);
+
+                } else if (serverResponse.startsWith("STOCK_RESULT|")) {
+                    BrowseItemsFrame.handleStockResponse(serverResponse);
+
+                } else {
+                    System.out.println("Server says: " + serverResponse);
+                }
             }
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -101,4 +109,3 @@ class ServerConnection implements Runnable {
         }
     }
 }
-
