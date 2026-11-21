@@ -418,7 +418,7 @@ public class BrowseItemsFrame extends JFrame {
                 BorderFactory.createLineBorder(borderPink),
                 BorderFactory.createEmptyBorder(8, 9, 9, 9)));
 
-        /
+        
         JLabel imageLabel = new JLabel(loadImage(imageFile, 320, 175), SwingConstants.CENTER);
         imageLabel.setOpaque(true);
         imageLabel.setBackground(new Color(255, 248, 245));
