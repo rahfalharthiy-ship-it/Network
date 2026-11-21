@@ -1,4 +1,7 @@
 
+
+
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -243,6 +246,7 @@ public class ClientHandler implements Runnable {
                 }
 
                 order.cancel();
+                sendMessage("CANCEL_RESULT|CONFIRMED|Order cancelled successfully.");
             }
 
            
