@@ -1,3 +1,4 @@
+
 import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
@@ -120,7 +121,7 @@ public class Order {
         return text.toString();
     }
 
-    // Returns null if the text is not a valid order
+    
     public static Order fromProtocolString(String username, String text) {
 
         try {
