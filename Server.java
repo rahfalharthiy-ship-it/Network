@@ -1,3 +1,4 @@
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -7,13 +8,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Server {
-private static final int PORT = 5000;
+private static final int PORT = 5001;
 private static final int MAX_CLIENTS = 4;
 
 private static final List<ClientHandler> clients =
         new ArrayList<>();
 
-// Confirmed orders of each user (key = username)
+
 private static final Map<String, List<Order>> ordersByUser =
         new HashMap<>();
 
@@ -103,7 +104,7 @@ public static List<Order> getOrdersByUser(String username) {
     }
 }
 
-// For the Cancel Order part
+
 public static Order findOrder(String username, long timestamp) {
     for (Order order : getOrdersByUser(username)) {
         if (order.getTimestamp() == timestamp) {
@@ -133,5 +134,30 @@ public static void showConnectedClients() {
 
         System.out.println("--------------------");
     }
+    
 }
+
+
+public static void broadcastStockUpdate(String productName) {
+
+    int quantity = InventoryManager.getStock(productName);
+
+    List<ClientHandler> snapshot;
+
+    synchronized (clients) {
+        snapshot = new ArrayList<>(clients);
+    }
+
+    for (ClientHandler client : snapshot) {
+        client.sendMessage(
+                "STOCK_RESULT|" + productName + "|" + quantity
+        );
+    }
+}
+
+
+public static int getStock(String productName) {
+    return InventoryManager.getStock(productName);
+}
+
 }  
