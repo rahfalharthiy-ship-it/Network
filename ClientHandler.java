@@ -40,7 +40,7 @@ public class ClientHandler implements Runnable {
             output = new PrintWriter(
                     socket.getOutputStream(), true);
 
-            // Receive username
+            
             username = input.readLine();
 
             if (username == null || username.trim().isEmpty()) {
@@ -49,7 +49,7 @@ public class ClientHandler implements Runnable {
 
             username = username.trim();
 
-            // Confirm connection to client
+            
             sendMessage("CONNECTED");
 
             Server.broadcast(
@@ -118,8 +118,7 @@ public class ClientHandler implements Runnable {
 
         try {
 
-            // Format:
-            // ORDER|username|Product:Quantity;Product:Quantity
+            
 
             String[] messageParts =
                     message.split("\\|", 3);
@@ -136,7 +135,7 @@ public class ClientHandler implements Runnable {
 
             String orderData = messageParts[2];
 
-            // Check username
+           
             if (!orderUsername.equals(username)) {
 
                 sendMessage(
@@ -150,7 +149,7 @@ public class ClientHandler implements Runnable {
 
             String[] products = orderData.split(";");
 
-            // Read products and quantities
+            
             for (String productData : products) {
 
                 String[] parts = productData.split(":");
@@ -179,7 +178,7 @@ public class ClientHandler implements Runnable {
                 order.put(productName, quantity);
             }
 
-            // Check stock and confirm or cancel order
+            
             String result = processOrder(order);
             
             if (result.startsWith("CONFIRMED")) {
@@ -246,12 +245,12 @@ public class ClientHandler implements Runnable {
                 order.cancel();
             }
 
-            // Update stock for all connected clients
+           
             for (String productName : order.getItems().keySet()) {
                 Server.broadcastStockUpdate(productName);
             }
 
-            // Refresh the orders table
+            
             handleGetOrders();
 
         } catch (Exception e) {
@@ -263,7 +262,7 @@ public class ClientHandler implements Runnable {
     private static String processOrder(
             Map<String, Integer> order) {
 
-        // Deduct all products from the central inventory
+        
         boolean success = InventoryManager.deductOrder(order);
 
         if (success) {
