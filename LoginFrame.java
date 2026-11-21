@@ -1,4 +1,6 @@
 
+
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.BufferedReader;
@@ -6,7 +8,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-
+import javax.swing.JOptionPane;
 
 public class LoginFrame extends JFrame {
     
@@ -94,7 +96,16 @@ class ServerConnection implements Runnable {
                 } else if (serverResponse.startsWith("STOCK_RESULT|")) {
                     BrowseItemsFrame.handleStockResponse(serverResponse);
 
-                } else {
+                } 
+                else if (serverResponse.startsWith("CANCEL_RESULT|")) {
+    JOptionPane.showMessageDialog(
+            null,
+            "Order cancelled successfully!",
+            "Cancellation Confirmation",
+            JOptionPane.INFORMATION_MESSAGE
+    );
+}
+                else {
                     System.out.println("Server says: " + serverResponse);
                 }
             }
