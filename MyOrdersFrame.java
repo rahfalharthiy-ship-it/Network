@@ -1,3 +1,4 @@
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -19,6 +20,7 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.JOptionPane;
 
 
 public class MyOrdersFrame extends JFrame {
@@ -207,6 +209,36 @@ public class MyOrdersFrame extends JFrame {
                 "Refresh", new Color(255, 225, 232),
                 new Color(145, 75, 96), 18);
         refreshButton.addActionListener(e -> requestOrders());
+        
+        RoundedButton cancelButton = new RoundedButton(
+                "Cancel Order", new Color(190, 50, 50),
+                Color.WHITE, 18);
+
+        cancelButton.addActionListener(e -> {
+            Order selectedOrder = getSelectedOrder();
+
+            if (selectedOrder == null) {
+                JOptionPane.showMessageDialog(
+                        this, "Please select an order first.");
+                return;
+            }
+
+            if (selectedOrder.isCancelled()) {
+                JOptionPane.showMessageDialog(
+                        this, "This order is already cancelled.");
+                return;
+            }
+
+            int choice = JOptionPane.showConfirmDialog(
+                    this,
+                    "Are you sure you want to cancel this order?",
+                    "Cancel Order",
+                    JOptionPane.YES_NO_OPTION);
+
+            if (choice == JOptionPane.YES_OPTION && out != null) {
+                out.println("CANCEL_ORDER|" + selectedOrder.getTimestamp());
+            }
+        });
 
         RoundedButton closeButton = new RoundedButton(
                 "Close", pink, Color.WHITE, 18);
@@ -215,6 +247,7 @@ public class MyOrdersFrame extends JFrame {
         JPanel buttonsPanel = new JPanel(
                 new FlowLayout(FlowLayout.RIGHT, 10, 0));
         buttonsPanel.setBackground(cream);
+        buttonsPanel.add(cancelButton);
         buttonsPanel.add(refreshButton);
         buttonsPanel.add(closeButton);
         mainPanel.add(buttonsPanel, BorderLayout.SOUTH);
