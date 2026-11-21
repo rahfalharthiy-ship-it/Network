@@ -1,3 +1,6 @@
+
+
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -32,6 +35,12 @@ public class BrowseItemsFrame extends JFrame {
     private String username;
     private Socket socket;
     private PrintWriter out;
+    
+    private static BrowseItemsFrame currentInstance;
+
+    private final Map<String, Integer> serverStock = new LinkedHashMap<>(); 
+    private String currentCategory;
+    private final java.util.Set<String> requestedStock = new java.util.HashSet<>();
 
     // Temporary client-side cart. It will be connected to the server during integration.
     private final Map<String, CartItem> cart = new LinkedHashMap<>();
@@ -94,7 +103,6 @@ public class BrowseItemsFrame extends JFrame {
         "Facial_Cleanser.png", "Moisturizer.png", "Face_Serum.png", "Sunscreen.png"
     };
     private final double[] skincarePrices = {35.00, 48.00, 65.00, 42.00};
-    private final int[] skincareStock = {12, 8, 10, 15};
 
     private final String[] haircareNames = {
         "Shampoo", "Conditioner", "Hair Mask", "Hair Oil"
@@ -103,7 +111,6 @@ public class BrowseItemsFrame extends JFrame {
         "Shampoo.png", "Conditioner.png", "Hair_Mask.png", "Hair_Oil.png"
     };
     private final double[] haircarePrices = {32.00, 34.00, 55.00, 47.00};
-    private final int[] haircareStock = {10, 9, 6, 11};
 
     private final String[] bodyNames = {
         "Body Lotion", "Body Wash", "Body Scrub", "Body Cream"
@@ -112,7 +119,6 @@ public class BrowseItemsFrame extends JFrame {
         "Body_Lotion.png", "Body_Wash.png", "Body_Scrub.png", "Body_Cream.png"
     };
     private final double[] bodyPrices = {39.00, 28.00, 45.00, 41.00};
-    private final int[] bodyStock = {7, 14, 5, 8};
 
     public BrowseItemsFrame() {
         setTitle("Glowzy");
@@ -199,16 +205,16 @@ public class BrowseItemsFrame extends JFrame {
         
         myOrdersButton = new RoundedButton("My Orders",
         new Color(255, 225, 232), new Color(145, 75, 96), 18);
-myOrdersButton.setPreferredSize(new Dimension(125, 46));
-myOrdersButton.setMinimumSize(new Dimension(125, 46));
-myOrdersButton.setMaximumSize(new Dimension(125, 46));
-myOrdersButton.addActionListener(e -> showMyOrders());
+        myOrdersButton.setPreferredSize(new Dimension(125, 46));
+        myOrdersButton.setMinimumSize(new Dimension(125, 46));
+        myOrdersButton.setMaximumSize(new Dimension(125, 46));
+        myOrdersButton.addActionListener(e -> showMyOrders());
 
         
-JPanel rightSlot = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 8, 0));
-rightSlot.setOpaque(false);
-rightSlot.add(myOrdersButton);
-rightSlot.add(cartButton);
+        JPanel rightSlot = new JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 8, 0));
+        rightSlot.setOpaque(false);
+        rightSlot.add(myOrdersButton);
+        rightSlot.add(cartButton);
 
         // Equal-width header columns keep the store name mathematically centered.
         header.setLayout(new GridLayout(1, 3));
@@ -220,6 +226,7 @@ rightSlot.add(cartButton);
         add(header, BorderLayout.NORTH);
         add(contentPanel, BorderLayout.CENTER);
         showCategories();
+        currentInstance = this;
     }
     public BrowseItemsFrame(String username, Socket socket, PrintWriter out) {
     this();
@@ -227,7 +234,56 @@ rightSlot.add(cartButton);
     this.socket = socket;
     this.out = out;
     }
+    public static void handleStockResponse(String response) {
+        BrowseItemsFrame frame = currentInstance;
 
+        if (frame == null) {
+            return;
+        }
+
+        SwingUtilities.invokeLater(() -> {
+            String[] parts = response.split("\\|", 3);
+
+            if (parts.length != 3) {
+                System.out.println("Invalid stock response: " + response);
+                return;
+            }
+
+            try {
+                String productName = parts[1];
+                int quantity = Integer.parseInt(parts[2]);
+
+                frame.serverStock.put(productName, quantity);
+                if (frame.currentCategory != null) {
+                    frame.showProducts(frame.currentCategory);
+                }
+
+                System.out.println(
+                    "Updated stock: " + productName + " = " + quantity
+                );
+
+            } catch (NumberFormatException ex) {
+                System.out.println("Invalid stock quantity: " + response);
+            }
+        });
+    }
+    
+    public static void refreshCurrentStock() {
+        BrowseItemsFrame frame = currentInstance;
+
+        if (frame == null) {
+            return;
+        }
+
+        SwingUtilities.invokeLater(() -> {
+            frame.requestedStock.clear();
+
+            if (frame.currentCategory != null) {
+                frame.showProducts(frame.currentCategory);
+            }
+        });
+    }
+    
     private void showCategories() {
         if (headerBackButton != null) {
             headerBackButton.setVisible(false);
@@ -290,26 +346,26 @@ rightSlot.add(cartButton);
         String[] names;
         String[] images;
         double[] prices;
-        int[] stock;
+        
 
         switch (category) {
             case "Skincare":
                 names = skincareNames;
                 images = skincareImages;
                 prices = skincarePrices;
-                stock = skincareStock;
+                
                 break;
             case "Haircare":
                 names = haircareNames;
                 images = haircareImages;
                 prices = haircarePrices;
-                stock = haircareStock;
+                
                 break;
             default:
                 names = bodyNames;
                 images = bodyImages;
                 prices = bodyPrices;
-                stock = bodyStock;
+                
                 break;
         }
 
@@ -327,10 +383,20 @@ rightSlot.add(cartButton);
         products.setBackground(cream);
         products.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
 
-        for (int i = 0; i < names.length; i++) {
-            products.add(createProductCard(names[i], images[i], prices[i], stock[i]));
-        }
+        currentCategory = category;
 
+        for (int i = 0; i < names.length; i++) {
+
+            if (out != null && requestedStock.add(names[i])) {
+                out.println("STOCK|" + names[i]);
+            }
+
+            int availableStock = serverStock.getOrDefault(names[i], 0);
+
+            products.add(createProductCard(
+                    names[i], images[i], prices[i], availableStock
+            ));
+        }
         JScrollPane scrollPane = new JScrollPane(products);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
         scrollPane.getViewport().setBackground(cream);
@@ -381,6 +447,7 @@ rightSlot.add(cartButton);
         JSpinner quantitySpinner = new JSpinner(
                 new SpinnerNumberModel(minQuantity, minQuantity, Math.max(stock, 0), 1));
         quantitySpinner.setPreferredSize(new Dimension(65, 27));
+        quantitySpinner.setEnabled(stock > 0);
         quantityRow.add(new JLabel("Qty:"));
         quantityRow.add(quantitySpinner);
         card.add(quantityRow);
@@ -464,13 +531,13 @@ rightSlot.add(cartButton);
     }
 
     new ShoppingCartFrame(
-            products,
-            name -> {
-                cart.remove(name);
-                updateCartButton();
-            },
-            out,
-            username
+        products,
+        name -> {
+            cart.remove(name);
+            updateCartButton();
+        },
+        out,
+        username
     ).setVisible(true);
 }
    
